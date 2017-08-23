@@ -1,0 +1,25 @@
+<div align="center">
+<?php if (!empty($error)) { ?>
+<div class="alert">
+  <p><?php p($error); ?></p>
+</div>
+<?php
+} else {
+?>
+<p><?php print_string("paymentrequired"); ?></p>
+<p><b><?php echo $instancename; ?></b></p>
+<p><b><?php echo get_string("cost").": {$cost} {$instance->currency}"; ?></b></p>
+<p><?php print_string("paymentinstant") ?></p>
+
+<?php
+?>
+<div style="display: inline-block;">
+<form action="<?php echo $tokens[0]['redirect_url']; ?>" method="post">
+  <input type="hidden" name="token" value="<?php echo $tokens[0]['token']; ?>" />
+  <input type="submit" value="<?php print_string("sendpaymentbutton", "enrol_begateway"); ?>" />
+</form>
+</div>
+<?php
+}
+?>
+</div>
