@@ -223,7 +223,7 @@ class enrol_begateway_plugin extends enrol_plugin {
                   $erip_id = "{$USER->id}{$course->id}{$instance->id}";
 
                   $erip = new \beGateway\PaymentMethod\Erip(array(
-                    'order_id' => intval($erip_id),
+                    'order_id' => intval(substr($erip_id, 0, 12)),
                     'account_number' => $erip_id,
                     'service_no' => $this->get_config('begatewayerip_service_no'),
                     'service_info' => array(
