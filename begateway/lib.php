@@ -2,7 +2,7 @@
 
 defined('MOODLE_INTERNAL') || die("Cannot be included");
 
-require_once(__DIR__ . '/begateway-api-php/lib/beGateway.php');
+require_once(__DIR__ . '/begateway-api-php/lib/BeGateway.php');
 
 /**
  * begateway enrolment plugin implementation.
@@ -172,13 +172,13 @@ class enrol_begateway_plugin extends enrol_plugin {
                 $usercity        = $USER->city;
                 $instancename    = $this->get_instance_name($instance);
 
-                \beGateway\Settings::$shopId = $this->get_config('begatewayshop_id');
-                \beGateway\Settings::$shopKey = $this->get_config('begatewayshop_key');
-                \beGateway\Settings::$gatewayBase = 'https://' . $this->get_config('begatewaydomain_gateway');
-                \beGateway\Settings::$checkoutBase = 'https://' . $this->get_config('begatewaydomain_checkout');
-                \beGateway\Settings::$apiBase = 'https://' . $this->get_config('begatewaydomain_api');
+                \BeGateway\Settings::$shopId = $this->get_config('begatewayshop_id');
+                \BeGateway\Settings::$shopKey = $this->get_config('begatewayshop_key');
+                \BeGateway\Settings::$gatewayBase = 'https://' . $this->get_config('begatewaydomain_gateway');
+                \BeGateway\Settings::$checkoutBase = 'https://' . $this->get_config('begatewaydomain_checkout');
+                \BeGateway\Settings::$apiBase = 'https://' . $this->get_config('begatewaydomain_api');
 
-                $transaction = new \beGateway\GetPaymentToken;
+                $transaction = new \BeGateway\GetPaymentToken;
 
                 $transaction->money->setAmount($cost);
                 $transaction->money->setCurrency($instance->currency);
@@ -215,14 +215,14 @@ class enrol_begateway_plugin extends enrol_plugin {
                 $transaction->setDescription($coursefullname);
 
                 if ((int)$this->get_config('enable_card') == 1) {
-                  $cc = new \beGateway\PaymentMethod\CreditCard;
+                  $cc = new \BeGateway\PaymentMethod\CreditCard;
                   $transaction->addPaymentMethod($cc);
                 }
 
                 if ((int)$this->get_config('enable_erip') == 1) {
                   $erip_id = "{$USER->id}{$course->id}{$instance->id}";
 
-                  $erip = new \beGateway\PaymentMethod\Erip(array(
+                  $erip = new \BeGateway\PaymentMethod\Erip(array(
                     'order_id' => intval(substr($erip_id, 0, 12)),
                     'account_number' => $erip_id,
                     'service_no' => $this->get_config('begatewayerip_service_no'),

@@ -44,7 +44,7 @@ set_exception_handler('enrol_begateway_ipn_exception_handler');
 
 $data = new stdClass();
 
-$webhook = new \beGateway\Webhook;
+$webhook = new \BeGateway\Webhook;
 
 $custom = explode('|', $webhook->getTrackingId());
 
@@ -55,7 +55,7 @@ $data->userid           = (int)$custom[0];
 $data->courseid         = (int)$custom[1];
 $data->instanceid       = (int)$custom[2];
 
-$money = new \beGateway\Money;
+$money = new \BeGateway\Money;
 $money->setCents($webhook->getResponse()->transaction->amount);
 $money->setCurrency($webhook->getResponse()->transaction->currency);
 
@@ -87,8 +87,8 @@ if (! $plugin_instance = $DB->get_record("enrol", array("id"=>$data->instanceid,
 
 $plugin = enrol_get_plugin('begateway');
 
-\beGateway\Settings::$shopId = $plugin->get_config('begatewayshop_id');
-\beGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
+\BeGateway\Settings::$shopId = $plugin->get_config('begatewayshop_id');
+\BeGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
 
 if (! $webhook->isAuthorized()) {
     message_begateway_error_to_admin("Not authorized notification", $data);
@@ -142,7 +142,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $cost = (float) $plugin_instance->cost;
   }
 
-  $money2 = new \beGateway\Money;
+  $money2 = new \BeGateway\Money;
   $money2->setAmount($cost);
   $money2->setCurrency($plugin_instance->currency);
 
