@@ -197,8 +197,6 @@ class enrol_begateway_plugin extends enrol_plugin {
 
                 $transaction->customer->setEmail($USER->email);
 
-                $transaction->setAddressHidden();
-
                 $notification_url = "$CFG->wwwroot/enrol/begateway/ipn.php";
                 $notification_url = str_replace('carts.local', 'webhook.begateway.com:8443', $notification_url);
                 $transaction->setNotificationUrl($notification_url);
