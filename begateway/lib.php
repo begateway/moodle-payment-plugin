@@ -209,9 +209,6 @@ class enrol_begateway_plugin extends enrol_plugin {
                 $error = null;
                 $tokens = array();
 
-                $transaction->money->setAmount($cost);
-                $transaction->setDescription($coursefullname);
-
                 if ((int)$this->get_config('enable_card') == 1) {
                   $cc = new \BeGateway\PaymentMethod\CreditCard;
                   $transaction->addPaymentMethod($cc);
