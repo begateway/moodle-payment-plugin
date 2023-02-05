@@ -44,7 +44,7 @@ set_exception_handler('enrol_begateway_ipn_exception_handler');
 
 $data = new stdClass();
 
-$webhook = new \beGateway\Webhook;
+$webhook = new \BeGateway\Webhook;
 
 $custom = explode('|', $webhook->getTrackingId());
 
@@ -55,7 +55,7 @@ $data->userid           = (int)$custom[0];
 $data->courseid         = (int)$custom[1];
 $data->instanceid       = (int)$custom[2];
 
-$money = new \beGateway\Money;
+$money = new \BeGateway\Money;
 $money->setCents($webhook->getResponse()->transaction->amount);
 $money->setCurrency($webhook->getResponse()->transaction->currency);
 
@@ -87,8 +87,8 @@ if (! $plugin_instance = $DB->get_record("enrol", array("id"=>$data->instanceid,
 
 $plugin = enrol_get_plugin('begateway');
 
-\beGateway\Settings::$shopId = $plugin->get_config('begatewayshop_id');
-\beGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
+\BeGateway\Settings::$shopId = $plugin->get_config('begatewayshop_id');
+\BeGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
 
 if (! $webhook->isAuthorized()) {
     message_begateway_error_to_admin("Not authorized notification", $data);
@@ -99,14 +99,14 @@ if (! $webhook->isAuthorized()) {
 // Email user to let them know. Email admin.
 
 if ($webhook->isPending()) {
-    message_begateway_error_to_admin("Payment pending", $data);
-    die;
+    //message_begateway_error_to_admin("Payment pending", $data);
+    die('Payment pending');
 }
 
 if (! $webhook->isSuccess()) {
     #$plugin->unenrol_user($plugin_instance, $data->userid);
     #message_begateway_error_to_admin("Status not successful. User unenrolled from course", $data);
-    die;
+    die("Status not successful");
 }
 
 if ($webhook->isSuccess()) {          // VALID PAYMENT!
@@ -114,23 +114,23 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
   // If currency is incorrectly set then someone maybe trying to cheat the system
   if ($data->payment_currency != $plugin_instance->currency) {
       message_begateway_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
-      die;
+      die('Currency does not match course settings');
   }
 
   // At this point we only proceed with a status of completed or pending with a reason of echeck
   if ($existing = $DB->get_record("enrol_begateway", array("uid"=>$webhook->getUid()))) {   // Make sure this transaction doesn't exist already
       message_begateway_error_to_admin("Transaction {$webhook->getUid()} is being repeated!", $data);
-      die;
+      die("Transaction {$webhook->getUid()} is being repeated!");
   }
 
   if (!$user = $DB->get_record('user', array('id'=>$data->userid))) {   // Check that user exists
       message_begateway_error_to_admin("User $data->userid doesn't exist", $data);
-      die;
+      die("User $data->userid doesn't exist");
   }
 
   if (!$course = $DB->get_record('course', array('id'=>$data->courseid))) { // Check that course exists
       message_begateway_error_to_admin("Course $data->courseid doesn't exist", $data);
-      die;
+      die("Course $data->courseid doesn't exist");
   }
 
   $coursecontext = context_course::instance($course->id, IGNORE_MISSING);
@@ -142,15 +142,14 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $cost = (float) $plugin_instance->cost;
   }
 
-  $money2 = new \beGateway\Money;
+  $money2 = new \BeGateway\Money;
   $money2->setAmount($cost);
   $money2->setCurrency($plugin_instance->currency);
 
   $paid_cost = $data->payment_gross;
   if ($paid_cost < $money2->getAmount()) {
       message_begateway_error_to_admin("Amount paid is not enough ($paid_cost  < $cost))", $data);
-      die;
-
+      die("Amount paid is not enough ($paid_cost  < $cost)");
   }
 
   // Use the queried course's full name for the item_name field.
@@ -243,9 +242,9 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       }
   }
 
+  die("OK");
 }
-echo "OK";
-exit;
+die("Not processed");
 
 //--- HELPER FUNCTIONS --------------------------------------------------------------------------------------
 function message_begateway_error_to_admin($subject, $data) {
