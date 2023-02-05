@@ -110,10 +110,17 @@ class enrol_begateway_plugin extends enrol_plugin {
      * @param stdClass $instance
      * @return string html text, usually a form in a text box
      */
-    function enrol_page_hook(stdClass $instance) {
+    function enrol_page_hook(stdClass $instance, $options = array() ) {
         global $CFG, $USER, $OUTPUT, $PAGE, $DB;
 
         ob_start();
+
+        $options['buymoreattempts'] = (isset($options['buymoreattempts'])) ? $options['buymoreattempts'] : false;
+        $options['quiz_id'] = (isset($options['quiz_id'])) ? $options['quiz_id'] : 0;
+
+        if (!$options['buymoreattempts'] && $DB->record_exists('user_enrolments', array('userid'=>$USER->id, 'enrolid'=>$instance->id))) {
+            return ob_get_clean();
+        }
 
         if ($instance->enrolstartdate != 0 && $instance->enrolstartdate > time()) {
             return ob_get_clean();
@@ -197,6 +204,9 @@ class enrol_begateway_plugin extends enrol_plugin {
 
                 $transaction->customer->setEmail($USER->email);
 
+                if ($this->get_config('begatewaydomain_gateway') === true)
+                  $transaction->setTestMode();
+
                 $notification_url = "$CFG->wwwroot/enrol/begateway/ipn.php";
                 $notification_url = str_replace('carts.local', 'webhook.begateway.com:8443', $notification_url);
                 $transaction->setNotificationUrl($notification_url);
@@ -209,39 +219,47 @@ class enrol_begateway_plugin extends enrol_plugin {
                 $error = null;
                 $tokens = array();
 
-                if ((int)$this->get_config('enable_card') == 1) {
-                  $cc = new \BeGateway\PaymentMethod\CreditCard;
-                  $transaction->addPaymentMethod($cc);
-                }
+                $count = $options['buymoreattempts'] ? 6 : 2;
 
-                if ((int)$this->get_config('enable_erip') == 1) {
-                  $erip_id = "{$USER->id}{$course->id}{$instance->id}";
-
-                  $erip = new \BeGateway\PaymentMethod\Erip(array(
-                    'order_id' => intval(substr($erip_id, 0, 12)),
-                    'account_number' => $erip_id,
-                    'service_no' => $this->get_config('begatewayerip_service_no'),
-                    'service_info' => array(
-                      get_string("erip_service_info", "enrol_begateway", $coursefullname)
-                    )
-                  ));
-                  $transaction->addPaymentMethod($erip);
-                }
-
-                $transaction->setTrackingId("{$USER->id}|{$course->id}|{$instance->id}");
-
-                try{
-                  $response = $transaction->submit();
-                  if (!$response->isSuccess())
-                    throw new \Exception(get_string('gettokenerror'));
-
-                  $tokens[0] = array(
-                    'redirect_url' => $response->getRedirectUrlScriptName(),
-                    'token' => $response->getToken()
+                for ($i=1; $i < $count; $i++) {
+                  $token = clone $transaction;
+                  $token->money->setAmount($cost*$i);
+                  $token->setDescription($coursefullname . '. ' .
+                    get_string("tries", "enrol_begateway", $i) . '. ' .
+                    get_string("user", "enrol_begateway", $USER->username)
                   );
 
-                }catch(Exception $e) {
-                  $error = $e->getMessage();
+                  if ((int)$this->get_config('enable_card') == 1) {
+                    $cc = new \BeGateway\PaymentMethod\CreditCard;
+                    $token->addPaymentMethod($cc);
+                  }
+
+                  if ((int)$this->get_config('enable_erip') == 1) {
+                    $erip_id = "{$USER->id}{$course->id}{$instance->id}{$i}" . rand(1000,9999);
+
+                    $erip = new \BeGateway\PaymentMethod\Erip(array(
+                      'order_id' => intval(substr($erip_id, 0, 12)),
+                      'account_number' => $erip_id,
+                      'service_no' => $this->get_config('begatewayerip_service_no'),
+                      'service_info' => get_string("erip_service_info", "enrol_begateway", $coursefullname)
+                    ));
+                    $token->addPaymentMethod($erip);
+                  }
+
+                  $token->setTrackingId("{$USER->id}|{$course->id}|{$instance->id}|$i|{$options['quiz_id']}");
+                  try{
+                    $response = $token->submit();
+                    if (!$response->isSuccess())
+                      throw new \Exception(get_string('gettokenerror'));
+
+                    $tokens[$i] = array(
+                      'redirect_url' => $response->getRedirectUrlScriptName(),
+                      'token' => $response->getToken()
+                    );
+
+                  }catch(Exception $e) {
+                    $error = $e->getMessage();
+                  }
                 }
 
                 include($CFG->dirroot.'/enrol/begateway/enrol.html');

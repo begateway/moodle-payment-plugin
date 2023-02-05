@@ -54,6 +54,8 @@ if (!$custom[0])
 $data->userid           = (int)$custom[0];
 $data->courseid         = (int)$custom[1];
 $data->instanceid       = (int)$custom[2];
+$data->attempts         = (int)$custom[3];
+$data->quizid           = (int)$custom[4];
 
 $money = new \BeGateway\Money;
 $money->setCents($webhook->getResponse()->transaction->amount);
@@ -66,23 +68,19 @@ $data->timeupdated      = time();
 /// get the user and course records
 
 if (! $user = $DB->get_record("user", array("id"=>$data->userid))) {
-    message_begateway_error_to_admin("Not a valid user id", $data);
-    die;
+    die("Not a valid user id");
 }
 
 if (! $course = $DB->get_record("course", array("id"=>$data->courseid))) {
-    message_begateway_error_to_admin("Not a valid course id", $data);
-    die;
+    die("Not a valid course id");
 }
 
 if (! $context = context_course::instance($course->id, IGNORE_MISSING)) {
-    message_begateway_error_to_admin("Not a valid context id", $data);
-    die;
+    die("Not a valid context id");
 }
 
 if (! $plugin_instance = $DB->get_record("enrol", array("id"=>$data->instanceid, "status"=>0))) {
-    message_begateway_error_to_admin("Not a valid instance id", $data);
-    die;
+    die("Not a valid instance id");
 }
 
 $plugin = enrol_get_plugin('begateway');
@@ -91,45 +89,36 @@ $plugin = enrol_get_plugin('begateway');
 \BeGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
 
 if (! $webhook->isAuthorized()) {
-    message_begateway_error_to_admin("Not authorized notification", $data);
-    die;
+    die("Not authorized notification");
 }
-
 // If status is pending and reason is other than echeck then we are on hold until further notice
 // Email user to let them know. Email admin.
 
 if ($webhook->isPending()) {
-    //message_begateway_error_to_admin("Payment pending", $data);
-    die('Payment pending');
+    die("Payment pending");
 }
 
 if (! $webhook->isSuccess()) {
-    #$plugin->unenrol_user($plugin_instance, $data->userid);
-    #message_begateway_error_to_admin("Status not successful. User unenrolled from course", $data);
-    die("Status not successful");
+    die("Status not successful. User unenrolled from course");
 }
 
 if ($webhook->isSuccess()) {          // VALID PAYMENT!
 
   // If currency is incorrectly set then someone maybe trying to cheat the system
   if ($data->payment_currency != $plugin_instance->currency) {
-      message_begateway_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
-      die('Currency does not match course settings');
+      die("Currency does not match course settings, received: ".$data->payment_currency);
   }
 
   // At this point we only proceed with a status of completed or pending with a reason of echeck
   if ($existing = $DB->get_record("enrol_begateway", array("uid"=>$webhook->getUid()))) {   // Make sure this transaction doesn't exist already
-      message_begateway_error_to_admin("Transaction {$webhook->getUid()} is being repeated!", $data);
       die("Transaction {$webhook->getUid()} is being repeated!");
   }
 
   if (!$user = $DB->get_record('user', array('id'=>$data->userid))) {   // Check that user exists
-      message_begateway_error_to_admin("User $data->userid doesn't exist", $data);
       die("User $data->userid doesn't exist");
   }
 
   if (!$course = $DB->get_record('course', array('id'=>$data->courseid))) { // Check that course exists
-      message_begateway_error_to_admin("Course $data->courseid doesn't exist", $data);
       die("Course $data->courseid doesn't exist");
   }
 
@@ -146,10 +135,9 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
   $money2->setAmount($cost);
   $money2->setCurrency($plugin_instance->currency);
 
-  $paid_cost = $data->payment_gross;
-  if ($paid_cost < $money2->getAmount()) {
-      message_begateway_error_to_admin("Amount paid is not enough ($paid_cost  < $cost))", $data);
-      die("Amount paid is not enough ($paid_cost  < $cost)");
+  $paid_attempt_cost = $data->payment_gross / $data->attempts;
+  if ($paid_attempt_cost < $money2->getAmount()) {
+      die("Amount paid is not enough ($paid_attempt_cost  < $cost))");
   }
 
   // Use the queried course's full name for the item_name field.
@@ -177,6 +165,10 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $teacher = array_shift($users);
   } else {
       $teacher = false;
+  }
+
+  if ((int)$data->quizid > 0) {
+    quiz_begateway_update($webhook->getTrackingId(), $context);
   }
 
   $mailstudents = $plugin->get_config('mailstudents');
@@ -242,11 +234,76 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       }
   }
 
-  die("OK");
 }
-die("Not processed");
+echo "OK";
+exit;
 
 //--- HELPER FUNCTIONS --------------------------------------------------------------------------------------
+
+function quiz_begateway_update($tracking_id, $context) {
+  global $DB;
+  list($user_id, $course_id, $instance_id, $attempts, $quiz_id) = explode('|', $tracking_id);
+  $fromform = new stdClass;
+
+  $course = $DB->get_record('course', array('id'=>(int)$course_id), '*', MUST_EXIST);
+  if (!$course) {
+      throw new coding_exception('coursedoesnotexists');
+  }
+
+  $instance = $DB->get_record('enrol', array(
+    'id'=>(int)$instance_id,
+    'courseid' => (int)$course_id,
+    'enrol'=>'begateway'), '*', MUST_EXIST);
+  if (!$instance) {
+    throw new coding_exception('invalid enrol instance!');
+  }
+
+  $quiz = $DB->get_record('quiz', array('course' => $course->id, 'id' => $quiz_id), '*', MUST_EXIST);
+  if (!$quiz) {
+    throw new coding_exception('invalidquizid');
+  }
+
+  $override = $DB->get_record('quiz_overrides', array(
+    'quiz' => $quiz->id,
+    'userid' => $user_id
+  ));
+  $params = array(
+      'context' => $context,
+      'other' => array(
+          'quizid' => $quiz->id
+      )
+  );
+
+  if (isset($override->id) && (int)$override->id > 0) {
+      $fromform->id = $override->id;
+      $fromform->quiz = $quiz->id;
+      $fromform->attempts = $override->attempts + $attempts;
+      $fromform->userid = $user_id;
+
+      $DB->update_record('quiz_overrides', $fromform);
+
+      $params['objectid'] = $override->id;
+      $params['relateduserid'] = $fromform->userid;
+
+      $event = \mod_quiz\event\user_override_updated::create($params);
+
+      // Trigger the override updated event.
+     $event->trigger();
+  } else {
+      unset($fromform->id);
+      $fromform->attempts = $attempts + 1; // to count an attempt assigned upon course enrollment
+      $fromform->userid = $user_id;
+      $fromform->quiz = $quiz->id;
+      $fromform->id = $DB->insert_record('quiz_overrides', $fromform);
+
+      $params['relateduserid'] = $fromform->userid;
+      $event = \mod_quiz\event\user_override_created::create($params);
+
+      // Trigger the override created event.
+      $event->trigger();
+  }
+}
+
 function message_begateway_error_to_admin($subject, $data) {
     echo $subject;
     $admin = get_admin();

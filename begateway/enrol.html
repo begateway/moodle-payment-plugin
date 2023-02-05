@@ -5,21 +5,30 @@
 </div>
 <?php
 } else {
+  $count = sizeof($tokens);
 ?>
-<p><?php print_string("paymentrequired"); ?></p>
+<p><?php print_string("begateway:paymentrequired", "enrol_begateway"); ?></p>
 <p><b><?php echo $instancename; ?></b></p>
-<p><b><?php echo get_string("cost").": {$cost} {$instance->currency}"; ?></b></p>
-<p><?php print_string("paymentinstant") ?></p>
+<p><b><?php echo get_string("cost", "enrol_begateway").": {$cost} {$instance->currency}"; ?></b></p>
+<p><?php print_string("paymentinstant", "enrol_begateway") ?></p>
 
 <?php
+  for ($i = 1;$i < $count+1;$i++) {
+    if ($count == 1) {
+      $button_text = "sendpaymentbutton";
+    } else {
+      $button_text = "sendpaymentbutton_${i}";
+    }
 ?>
 <div style="display: inline-block;">
-<form action="<?php echo $tokens[0]['redirect_url']; ?>" method="post">
-  <input type="hidden" name="token" value="<?php echo $tokens[0]['token']; ?>" />
-  <input type="submit" value="<?php print_string("sendpaymentbutton", "enrol_begateway"); ?>" />
+<form action="<?php echo $tokens[$i]['redirect_url']; ?>" method="post">
+  <input type="hidden" name="token" value="<?php echo $tokens[$i]['token']; ?>" />
+  <input type="submit" value="<?php print_string($button_text, "enrol_begateway"); ?>" />
 </form>
 </div>
 <?php
-}
+  }
 ?>
 </div>
+<?php
+}
