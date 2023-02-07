@@ -56,6 +56,7 @@ $data->courseid         = (int)$custom[1];
 $data->instanceid       = (int)$custom[2];
 $data->attempts         = (int)$custom[3];
 $data->quizid           = (int)$custom[4];
+$data->uid              = (string)$webhook->getUid();
 
 $money = new \BeGateway\Money;
 $money->setCents($webhook->getResponse()->transaction->amount);
@@ -145,8 +146,6 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
 
   // ALL CLEAR !
 
-  $DB->insert_record("enrol_begateway", $data);
-
   if ($plugin_instance->enrolperiod) {
       $timestart = time();
       $timeend   = $timestart + $plugin_instance->enrolperiod;
@@ -169,6 +168,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
 
   if ((int)$data->quizid > 0) {
     quiz_begateway_update($webhook->getTrackingId(), $context);
+    $DB->insert_record("enrol_begateway", $data);
   }
 
   $mailstudents = $plugin->get_config('mailstudents');
