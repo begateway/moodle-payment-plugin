@@ -22,6 +22,8 @@ class enrol_begateway_edit_form extends moodleform {
 
         $mform->addElement('text', 'cost', get_string('cost', 'enrol_begateway'), array('size'=>4));
         $mform->setDefault('cost', $plugin->get_config('cost'));
+        $mform->setType('cost', PARAM_RAW);
+        $mform->setType('name', PARAM_TEXT);
 
         $begatewaycurrencies = array('USD' => 'USD',
                               'GBP' => 'GBP',
@@ -54,7 +56,9 @@ class enrol_begateway_edit_form extends moodleform {
         $mform->addHelpButton('enrolenddate', 'enrolenddate', 'enrol_begateway');
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_RAW);
         $mform->addElement('hidden', 'courseid');
+        $mform->setType('courseid', PARAM_RAW);
 
         $this->add_action_buttons(true, ($instance->id ? null : get_string('addinstance', 'enrol')));
 
