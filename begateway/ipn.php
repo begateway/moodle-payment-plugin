@@ -34,7 +34,6 @@
 
 require("../../config.php");
 require_once("lib.php");
-require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir.'/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
 
@@ -181,7 +180,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
       $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
 
-      $eventdata = new stdClass();
+      $eventdata = new \core\message\message();
       $eventdata->modulename        = 'moodle';
       $eventdata->component         = 'enrol_begateway';
       $eventdata->name              = 'begateway_enrolment';
@@ -200,7 +199,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
       $a->user = fullname($user);
 
-      $eventdata = new stdClass();
+      $eventdata = new \core\message\message();
       $eventdata->modulename        = 'moodle';
       $eventdata->component         = 'enrol_begateway';
       $eventdata->name              = 'begateway_enrolment';
@@ -219,7 +218,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->user = fullname($user);
       $admins = get_admins();
       foreach ($admins as $admin) {
-          $eventdata = new stdClass();
+          $eventdata = new \core\message\message();
           $eventdata->modulename        = 'moodle';
           $eventdata->component         = 'enrol_begateway';
           $eventdata->name              = 'begateway_enrolment';
@@ -315,7 +314,7 @@ function message_begateway_error_to_admin($subject, $data) {
         $message .= "$key => $value\n";
     }
 
-    $eventdata = new stdClass();
+    $eventdata = new \core\message\message();
     $eventdata->modulename        = 'moodle';
     $eventdata->component         = 'enrol_begateway';
     $eventdata->name              = 'begateway_enrolment';
