@@ -204,11 +204,10 @@ class enrol_begateway_plugin extends enrol_plugin {
 
                 $transaction->customer->setEmail($USER->email);
 
-                if ($this->get_config('begatewaydomain_gateway') === true)
-                  $transaction->setTestMode();
+                if ($this->get_config('mode') == '1')
+                  $transaction->setTestMode(true);
 
                 $notification_url = "$CFG->wwwroot/enrol/begateway/ipn.php";
-                $notification_url = str_replace('carts.local', 'webhook.begateway.com:8443', $notification_url);
                 $transaction->setNotificationUrl($notification_url);
 
                 $return_url = "$CFG->wwwroot/enrol/begateway/return.php?id=$course->id" . "&uniqid=" . time();
