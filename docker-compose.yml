@@ -6,8 +6,9 @@ services:
       context: ./docker
       dockerfile: Dockerfile
       args:
-        php: "7.0"
-        version: "3.0.4"
+        php: "8.0"
+        upstream: "402"
+        version: "4.2.1"
     depends_on:
       - mysql
     ports:
@@ -17,8 +18,7 @@ services:
       - ./begateway:/var/www/html/enrol/begateway
 
   mysql:
-    image: mysql:5.6
-    restart: always
+    image: mariadb:10.6
     volumes:
       - /var/lib/mysql
     environment:
