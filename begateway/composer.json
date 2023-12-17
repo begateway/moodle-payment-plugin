@@ -1,0 +1,20 @@
+{
+    "name": "begateway/moodle-payment-plugin",
+    "description": "BeGateway Payment Plugin for Moodle",
+    "keywords": [
+        "bepaid",
+        "begateway",
+        "payment processing",
+        "api"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "BeGateway",
+            "email": "admin@begateway.com"
+        }
+    ],
+    "require": {
+        "begateway/begateway-api-php": "~4"
+    }
+}

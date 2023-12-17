@@ -2,7 +2,7 @@
 
 defined('MOODLE_INTERNAL') || die("Cannot be included");
 
-require_once(__DIR__ . '/begateway-api-php/lib/BeGateway.php');
+require_once(__DIR__ . '/vendor/autoload.php');
 
 /**
  * begateway enrolment plugin implementation.
@@ -112,7 +112,6 @@ class enrol_begateway_plugin extends enrol_plugin {
      */
     function enrol_page_hook(stdClass $instance) {
         global $CFG, $USER, $OUTPUT, $PAGE, $DB;
-
         ob_start();
 
         if ($instance->enrolstartdate != 0 && $instance->enrolstartdate > time()) {
@@ -158,7 +157,7 @@ class enrol_begateway_plugin extends enrol_plugin {
                     $wwwroot = str_replace("http://", "https://", $CFG->wwwroot);
                 }
                 echo '<div class="mdl-align"><p>'.get_string('paymentrequired').'</p>';
-                echo '<p><b>'.get_string('cost').": $instance->currency $cost".'</b></p>';
+                echo '<p><b>'.get_string('cost').": $cost $instance->currency".'</b></p>';
                 echo '<p><a href="'.$wwwroot.'/login/">'.get_string('loginsite').'</a></p>';
                 echo '</div>';
             } else {
@@ -197,8 +196,10 @@ class enrol_begateway_plugin extends enrol_plugin {
 
                 $transaction->customer->setEmail($USER->email);
 
+                if ($this->get_config('mode') == '1')
+                  $transaction->setTestMode(true);
+
                 $notification_url = "$CFG->wwwroot/enrol/begateway/ipn.php";
-                $notification_url = str_replace('carts.local', 'webhook.begateway.com:8443', $notification_url);
                 $transaction->setNotificationUrl($notification_url);
 
                 $return_url = "$CFG->wwwroot/enrol/begateway/return.php?id=$course->id" . "&uniqid=" . time();
