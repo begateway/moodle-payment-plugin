@@ -15,7 +15,7 @@ jobs:
       with:
         type: 'zip'
         filename: 'moodle-begateway-payment-plugin.zip'
-        directory: 'begateway'
+        exclusions: '*.git* docker* LICENSE* Makefile README* *.zip /*docker/*'
 
     - name: Upload Release
       uses: ncipollo/release-action@v1.12.0
