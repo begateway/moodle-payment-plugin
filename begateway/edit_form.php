@@ -19,9 +19,12 @@ class enrol_begateway_edit_form extends moodleform {
                          ENROL_INSTANCE_DISABLED => get_string('no'));
         $mform->addElement('select', 'status', get_string('status', 'enrol_begateway'), $options);
         $mform->setDefault('status', $plugin->get_config('status'));
+        $mform->setType('status', PARAM_TEXT);
 
         $mform->addElement('text', 'cost', get_string('cost', 'enrol_begateway'), array('size'=>4));
         $mform->setDefault('cost', $plugin->get_config('cost'));
+        $mform->setType('cost', PARAM_RAW);
+        $mform->setType('name', PARAM_TEXT);
 
         $begatewaycurrencies = array('USD' => 'USD',
                               'GBP' => 'GBP',
@@ -31,6 +34,7 @@ class enrol_begateway_edit_form extends moodleform {
                              );
         $mform->addElement('select', 'currency', get_string('currency', 'enrol_begateway'), $begatewaycurrencies);
         $mform->setDefault('currency', $plugin->get_config('currency'));
+        $mform->setType('currency', PARAM_TEXT);
 
         if ($instance->id) {
             $roles = get_default_enrol_roles($context, $instance->roleid);
@@ -39,22 +43,27 @@ class enrol_begateway_edit_form extends moodleform {
         }
         $mform->addElement('select', 'roleid', get_string('assignrole', 'enrol_begateway'), $roles);
         $mform->setDefault('roleid', $plugin->get_config('roleid'));
-
+        $mform->setType('roleid', PARAM_INT);
 
         $mform->addElement('duration', 'enrolperiod', get_string('enrolperiod', 'enrol_begateway'), array('optional' => true, 'defaultunit' => 86400));
         $mform->setDefault('enrolperiod', $plugin->get_config('enrolperiod'));
         $mform->addHelpButton('enrolperiod', 'enrolperiod', 'enrol_begateway');
+        $mform->setType('enrolperiod', PARAM_INT);
 
         $mform->addElement('date_selector', 'enrolstartdate', get_string('enrolstartdate', 'enrol_begateway'), array('optional' => true));
         $mform->setDefault('enrolstartdate', 0);
         $mform->addHelpButton('enrolstartdate', 'enrolstartdate', 'enrol_begateway');
+        $mform->setType('enrolstartdate', PARAM_INT);
 
         $mform->addElement('date_selector', 'enrolenddate', get_string('enrolenddate', 'enrol_begateway'), array('optional' => true));
         $mform->setDefault('enrolenddate', 0);
         $mform->addHelpButton('enrolenddate', 'enrolenddate', 'enrol_begateway');
+        $mform->setType('enrolenddate', PARAM_INT);
 
         $mform->addElement('hidden', 'id');
+        $mform->setType('id', PARAM_INT);
         $mform->addElement('hidden', 'courseid');
+        $mform->setType('courseid', PARAM_INT);
 
         $this->add_action_buttons(true, ($instance->id ? null : get_string('addinstance', 'enrol')));
 

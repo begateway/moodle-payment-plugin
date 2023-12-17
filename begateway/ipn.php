@@ -34,7 +34,6 @@
 
 require("../../config.php");
 require_once("lib.php");
-require_once($CFG->libdir.'/eventslib.php');
 require_once($CFG->libdir.'/enrollib.php');
 require_once($CFG->libdir . '/filelib.php');
 
@@ -54,6 +53,7 @@ if (!$custom[0])
 $data->userid           = (int)$custom[0];
 $data->courseid         = (int)$custom[1];
 $data->instanceid       = (int)$custom[2];
+$data->uid              = (string)$webhook->getUid();
 
 $money = new \BeGateway\Money;
 $money->setCents($webhook->getResponse()->transaction->amount);
@@ -66,23 +66,19 @@ $data->timeupdated      = time();
 /// get the user and course records
 
 if (! $user = $DB->get_record("user", array("id"=>$data->userid))) {
-    message_begateway_error_to_admin("Not a valid user id", $data);
-    die;
+    die("Not a valid user id");
 }
 
 if (! $course = $DB->get_record("course", array("id"=>$data->courseid))) {
-    message_begateway_error_to_admin("Not a valid course id", $data);
-    die;
+    die("Not a valid course id");
 }
 
 if (! $context = context_course::instance($course->id, IGNORE_MISSING)) {
-    message_begateway_error_to_admin("Not a valid context id", $data);
-    die;
+    die("Not a valid context id");
 }
 
 if (! $plugin_instance = $DB->get_record("enrol", array("id"=>$data->instanceid, "status"=>0))) {
-    message_begateway_error_to_admin("Not a valid instance id", $data);
-    die;
+    die("Not a valid instance id");
 }
 
 $plugin = enrol_get_plugin('begateway');
@@ -91,45 +87,37 @@ $plugin = enrol_get_plugin('begateway');
 \BeGateway\Settings::$shopKey = $plugin->get_config('begatewayshop_key');
 
 if (! $webhook->isAuthorized()) {
-    message_begateway_error_to_admin("Not authorized notification", $data);
-    die;
+    die("Not authorized notification");
 }
 
 // If status is pending and reason is other than echeck then we are on hold until further notice
 // Email user to let them know. Email admin.
 
 if ($webhook->isPending()) {
-    //message_begateway_error_to_admin("Payment pending", $data);
-    die('Payment pending');
+    die("Payment pending");
 }
 
 if (! $webhook->isSuccess()) {
-    #$plugin->unenrol_user($plugin_instance, $data->userid);
-    #message_begateway_error_to_admin("Status not successful. User unenrolled from course", $data);
-    die("Status not successful");
+    die("Status not successful. User unenrolled from course");
 }
 
 if ($webhook->isSuccess()) {          // VALID PAYMENT!
 
   // If currency is incorrectly set then someone maybe trying to cheat the system
   if ($data->payment_currency != $plugin_instance->currency) {
-      message_begateway_error_to_admin("Currency does not match course settings, received: ".$data->payment_currency, $data);
-      die('Currency does not match course settings');
+    die("Currency does not match course settings, received: ".$data->payment_currency);
   }
 
   // At this point we only proceed with a status of completed or pending with a reason of echeck
   if ($existing = $DB->get_record("enrol_begateway", array("uid"=>$webhook->getUid()))) {   // Make sure this transaction doesn't exist already
-      message_begateway_error_to_admin("Transaction {$webhook->getUid()} is being repeated!", $data);
       die("Transaction {$webhook->getUid()} is being repeated!");
   }
 
   if (!$user = $DB->get_record('user', array('id'=>$data->userid))) {   // Check that user exists
-      message_begateway_error_to_admin("User $data->userid doesn't exist", $data);
       die("User $data->userid doesn't exist");
   }
 
   if (!$course = $DB->get_record('course', array('id'=>$data->courseid))) { // Check that course exists
-      message_begateway_error_to_admin("Course $data->courseid doesn't exist", $data);
       die("Course $data->courseid doesn't exist");
   }
 
@@ -148,7 +136,6 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
 
   $paid_cost = $data->payment_gross;
   if ($paid_cost < $money2->getAmount()) {
-      message_begateway_error_to_admin("Amount paid is not enough ($paid_cost  < $cost))", $data);
       die("Amount paid is not enough ($paid_cost  < $cost)");
   }
 
@@ -189,7 +176,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->coursename = format_string($course->fullname, true, array('context' => $coursecontext));
       $a->profileurl = "$CFG->wwwroot/user/view.php?id=$user->id";
 
-      $eventdata = new stdClass();
+      $eventdata = new \core\message\message();
       $eventdata->modulename        = 'moodle';
       $eventdata->component         = 'enrol_begateway';
       $eventdata->name              = 'begateway_enrolment';
@@ -208,7 +195,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->course = format_string($course->fullname, true, array('context' => $coursecontext));
       $a->user = fullname($user);
 
-      $eventdata = new stdClass();
+      $eventdata = new \core\message\message();
       $eventdata->modulename        = 'moodle';
       $eventdata->component         = 'enrol_begateway';
       $eventdata->name              = 'begateway_enrolment';
@@ -227,7 +214,7 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       $a->user = fullname($user);
       $admins = get_admins();
       foreach ($admins as $admin) {
-          $eventdata = new stdClass();
+          $eventdata = new \core\message\message();
           $eventdata->modulename        = 'moodle';
           $eventdata->component         = 'enrol_begateway';
           $eventdata->name              = 'begateway_enrolment';
@@ -242,9 +229,10 @@ if ($webhook->isSuccess()) {          // VALID PAYMENT!
       }
   }
 
-  die("OK");
 }
-die("Not processed");
+
+echo "OK";
+exit;
 
 //--- HELPER FUNCTIONS --------------------------------------------------------------------------------------
 function message_begateway_error_to_admin($subject, $data) {
@@ -258,7 +246,7 @@ function message_begateway_error_to_admin($subject, $data) {
         $message .= "$key => $value\n";
     }
 
-    $eventdata = new stdClass();
+    $eventdata = new \core\message\message();
     $eventdata->modulename        = 'moodle';
     $eventdata->component         = 'enrol_begateway';
     $eventdata->name              = 'begateway_enrolment';
