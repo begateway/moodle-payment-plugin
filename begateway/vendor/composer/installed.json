@@ -1,0 +1,58 @@
+{
+    "packages": [
+        {
+            "name": "begateway/begateway-api-php",
+            "version": "4.5.3",
+            "version_normalized": "4.5.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/begateway/begateway-api-php.git",
+                "reference": "023e804d3b4285a31ad6f5d5887cd0b3a760c8c5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/begateway/begateway-api-php/zipball/023e804d3b4285a31ad6f5d5887cd0b3a760c8c5",
+                "reference": "023e804d3b4285a31ad6f5d5887cd0b3a760c8c5",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "php": ">= 5.6.0"
+            },
+            "time": "2022-07-06T06:40:31+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "BeGateway\\": "lib/BeGateway"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "BeGateway",
+                    "email": "admin@begateway.com"
+                }
+            ],
+            "description": "BeGateway PHP API library",
+            "keywords": [
+                "api",
+                "begateway",
+                "bepaid",
+                "payment processing"
+            ],
+            "support": {
+                "issues": "https://github.com/begateway/begateway-api-php/issues",
+                "source": "https://github.com/begateway/begateway-api-php/tree/4.5.3"
+            },
+            "install-path": "../begateway/begateway-api-php"
+        }
+    ],
+    "dev": true,
+    "dev-package-names": []
+}
