@@ -131,6 +131,6 @@ Issue pull requests or send feature requests or open [a new issue](https://githu
   * Дата истечения срока действия карты (неудачно) __10/30__
   * CVC __123__
 
-# Пожелаяния или вопросы?
+# Пожелания или вопросы?
 
 Отправляйте запросы на слияние или отправляйте запросы на функции или открывайте [новый вопрос](https://github.com/begateway/moodle-payment-plugin/issues/new).
