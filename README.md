@@ -2,7 +2,7 @@
 
 [Русская версия](#Введение)
 
-The plugin enables a payment method within Moodle, allowing integration with payment services from providers operating on the beGateway platform.
+The plugin enables a payment method within Moodle (supported version 3.11.8+), allowing integration with payment services from providers operating on the beGateway platform.
 
 # Installation
 
@@ -71,7 +71,7 @@ Issue pull requests or send feature requests or open [a new issue](https://githu
 
 [English version](#Introduction)
 
-Плагин добавляет метод оплаты в Moodle и обеспечивает интеграцию с услугами провайдеров платежей, работающих на платформе beGateway.
+Плагин добавляет метод оплаты в Moodle (поддерживаемая версия 3.11.8+) и обеспечивает интеграцию с услугами провайдеров платежей, работающих на платформе beGateway.
 
 # Установка
 
